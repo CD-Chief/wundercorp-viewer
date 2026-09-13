@@ -17,9 +17,12 @@ Open the printed local URL (e.g. http://localhost:4321).
 - `src/lib/components.ts` reads `../data/components.json` (repo root, one
   level up) directly at build/request time — no copy step, no separate
   content sync.
-- `public/components` is a symlink to `../components` (repo root), so
-  screenshots and `rendered.html` snapshots are served as static assets
-  without duplicating the files.
+- `src/pages/components/[...path].ts` serves screenshots and `rendered.html`
+  snapshots straight from `../components` (repo root) by reading them with
+  `node:fs`, without duplicating the files. (An earlier version used a
+  `public/components` symlink instead; that broke on machines where `git
+  clone` doesn't preserve symlinks, notably Windows without Developer Mode /
+  `core.symlinks=true`, so it was replaced with this endpoint.)
 - `/` — gallery grid with instant client-side search (name/author/bucket)
   and bucket chips.
 - `/component/[...slug]` — detail view: sandboxed iframe of `rendered.html`,

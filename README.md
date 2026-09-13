@@ -76,12 +76,14 @@ detail view with the rendered HTML in a sandboxed iframe and the raw
 
 **Architecture note:** the `viewer/` app does not copy `components/` or
 `data/` into itself. It reads `data/components.json` directly from the repo
-root at build/request time (`viewer/src/lib/components.ts`), and
-`viewer/public/components` is a symlink to the repo-root `components/`
-directory so screenshots and `rendered.html` snapshots are served as static
-assets without duplicating ~700MB of files. This means the viewer always
-reflects the current state of `components/` and `data/components.json` with
-no separate sync/import step — just `git pull` and refresh.
+root at build/request time (`viewer/src/lib/components.ts`), and screenshots
+and `rendered.html` snapshots are served straight off disk from the
+repo-root `components/` directory via a small endpoint
+(`viewer/src/pages/components/[...path].ts`) rather than a symlink, so it
+works the same on every OS regardless of `git clone` symlink support. This
+means the viewer always reflects the current state of `components/` and
+`data/components.json` with no separate sync/import step — just `git pull`
+and refresh.
 
 This viewer is a personal/local dev tool: no auth, no deployment, no writes
 back to this repository. It only reads, and it's meant to run via
