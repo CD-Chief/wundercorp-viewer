@@ -5,3 +5,7 @@ __MACOSX/
 *.log
 .env
 .env.*
+
+# Astro viewer app build output
+viewer/dist/
+viewer/.astro/
