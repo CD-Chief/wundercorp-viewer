@@ -58,6 +58,35 @@ r        refine the search
 q        quit
 ```
 
+## Browse visually (component gallery viewer)
+
+This fork adds a local Astro app in [`viewer/`](viewer/) for browsing the component
+library as a searchable, visual gallery instead of the terminal finder above.
+
+```bash
+cd viewer
+npm install
+npm run dev
+```
+
+Then open the printed local URL. The gallery shows a screenshot grid with
+instant client-side search (by name/author/bucket); clicking a card opens a
+detail view with the rendered HTML in a sandboxed iframe and the raw
+`prompt.md` (with a "Copy prompt" button) for pasting into any AI coding tool.
+
+**Architecture note:** the `viewer/` app does not copy `components/` or
+`data/` into itself. It reads `data/components.json` directly from the repo
+root at build/request time (`viewer/src/lib/components.ts`), and
+`viewer/public/components` is a symlink to the repo-root `components/`
+directory so screenshots and `rendered.html` snapshots are served as static
+assets without duplicating ~700MB of files. This means the viewer always
+reflects the current state of `components/` and `data/components.json` with
+no separate sync/import step — just `git pull` and refresh.
+
+This viewer is a personal/local dev tool: no auth, no deployment, no writes
+back to this repository. It only reads, and it's meant to run via
+`npm run dev`.
+
 ## Repository structure
 
 ```text
@@ -78,6 +107,8 @@ scripts/
   find-component.mjs
   import-generated-components.mjs
   validate-directory.mjs
+viewer/
+  # local Astro gallery app, see "Browse visually" above
 ```
 
 ## Contributing
