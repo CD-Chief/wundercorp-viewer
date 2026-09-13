@@ -7,7 +7,7 @@ import path from "node:path";
 // the awesome-components data without a separate import step.
 // Note: import.meta.url is NOT used here because `astro build` relocates bundled
 // chunks to a different directory depth, which breaks source-relative URL paths.
-const REPO_ROOT = path.resolve(process.cwd(), "..");
+export const REPO_ROOT = path.resolve(process.cwd(), "..");
 const DATA_PATH = path.join(REPO_ROOT, "data", "components.json");
 
 export type RawComponentEntry = {
@@ -27,18 +27,20 @@ export type RawComponentEntry = {
 export type ComponentVariant = RawComponentEntry & {
   /** Stable id / URL slug: bucket/author/component/variant */
   slug: string;
-  /** Public (served) URL for the screenshot, via public/components symlink */
+  /** Served URL for the screenshot (routed through src/pages/components/[...path].ts) */
   screenshotUrl: string;
-  /** Public (served) URL for the rendered HTML snapshot */
+  /** Served URL for the rendered HTML snapshot */
   htmlUrl: string;
   /** Text usable for client-side search filtering */
   searchText: string;
 };
 
 function toPublicUrl(repoRelativePath: string): string {
-  // repoRelativePath looks like "components/<bucket>/.../file.ext"; the
-  // public/components symlink mirrors the repo-root components/ directory,
-  // so we just prefix a leading slash.
+  // repoRelativePath looks like "components/<bucket>/.../file.ext"; this is
+  // served by the src/pages/components/[...path].ts endpoint (reads the file
+  // straight off disk), not a symlinked public/ dir — symlinks don't survive
+  // a plain `git clone` on every platform (notably Windows without Developer
+  // Mode / core.symlinks), so we avoid depending on one.
   return `/${repoRelativePath}`;
 }
 
