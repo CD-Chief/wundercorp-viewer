@@ -9,19 +9,41 @@ const buckets = getBuckets();
 <Layout title={`Component Gallery (${components.length})`}>
   <header class="sticky top-0 z-10 border-b border-neutral-200 bg-neutral-50/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/90">
     <div class="mx-auto max-w-7xl px-4 py-4">
-      <div class="flex items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-lg font-semibold">
           Component Gallery <span class="text-neutral-400 dark:text-neutral-500" id="result-count">({components.length})</span>
         </h1>
-        <button
-          id="theme-toggle"
-          type="button"
-          class="rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700"
-          aria-label="Toggle dark mode"
-        >
-          <span class="dark:hidden">🌙 Dark</span>
-          <span class="hidden dark:inline">☀️ Light</span>
-        </button>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+            <label for="cols-range">Columns</label>
+            <input
+              id="cols-range"
+              type="range"
+              min="1"
+              max="8"
+              step="1"
+              class="w-24 accent-neutral-600 dark:accent-neutral-400"
+            />
+            <span id="cols-value" class="w-4 text-center tabular-nums text-neutral-700 dark:text-neutral-300"></span>
+            <button
+              id="cols-auto"
+              type="button"
+              class="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+              title="Reset to responsive default"
+            >
+              Auto
+            </button>
+          </div>
+          <button
+            id="theme-toggle"
+            type="button"
+            class="rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700"
+            aria-label="Toggle dark mode"
+          >
+            <span class="dark:hidden">🌙 Dark</span>
+            <span class="hidden dark:inline">☀️ Light</span>
+          </button>
+        </div>
       </div>
 
       <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -57,7 +79,7 @@ const buckets = getBuckets();
     <p id="empty-state" class="hidden py-16 text-center text-neutral-400 dark:text-neutral-500">
       No components match your search.
     </p>
-    <div id="grid" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    <div id="grid" class="grid gap-4">
       {
         components.map((c) => (
           <a
@@ -87,6 +109,34 @@ const buckets = getBuckets();
       }
     </div>
   </main>
+
+  <style>
+    /* Responsive default column count. Overridden inline via the Columns
+       slider (higher specificity than these class-less media-query rules). */
+    #grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @media (min-width: 640px) {
+      #grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    @media (min-width: 768px) {
+      #grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    @media (min-width: 1024px) {
+      #grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+    }
+    @media (min-width: 1280px) {
+      #grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+    }
+  </style>
 
   <script>
     const searchInput = document.getElementById("search") as HTMLInputElement;
@@ -143,6 +193,68 @@ const buckets = getBuckets();
 
       const next = visibleCards[Math.min(Math.max(nextIndex, 0), visibleCards.length - 1)];
       next?.focus();
+    });
+
+    // Columns control: lets the user pick how many cards show per row (1-8),
+    // overriding the responsive default set in the <style> block above via an
+    // inline grid-template-columns (inline style always wins over stylesheet
+    // rules, including the media queries), persisted to localStorage.
+    const colsRange = document.getElementById("cols-range") as HTMLInputElement;
+    const colsValue = document.getElementById("cols-value")!;
+    const colsAutoBtn = document.getElementById("cols-auto")!;
+    const COLS_KEY = "gridCols";
+
+    function currentComputedCols(): number {
+      const template = getComputedStyle(grid).gridTemplateColumns;
+      return template.split(" ").filter(Boolean).length || 1;
+    }
+
+    function applyCols(n: number) {
+      grid.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
+      colsRange.value = String(n);
+      colsValue.textContent = String(n);
+    }
+
+    function resetColsToAuto() {
+      grid.style.gridTemplateColumns = "";
+      const computed = currentComputedCols();
+      colsRange.value = String(computed);
+      colsValue.textContent = String(computed);
+    }
+
+    try {
+      const storedCols = localStorage.getItem(COLS_KEY);
+      if (storedCols) applyCols(Number(storedCols));
+      else resetColsToAuto();
+    } catch {
+      resetColsToAuto();
+    }
+
+    colsRange.addEventListener("input", () => {
+      const n = Number(colsRange.value);
+      applyCols(n);
+      try {
+        localStorage.setItem(COLS_KEY, String(n));
+      } catch {
+        // localStorage unavailable — the slider still works for this session.
+      }
+    });
+
+    colsAutoBtn.addEventListener("click", () => {
+      try {
+        localStorage.removeItem(COLS_KEY);
+      } catch {
+        // ignore
+      }
+      resetColsToAuto();
+    });
+
+    window.addEventListener("resize", () => {
+      try {
+        if (!localStorage.getItem(COLS_KEY)) resetColsToAuto();
+      } catch {
+        // ignore
+      }
     });
 
     // Theme toggle
